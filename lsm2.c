@@ -10,13 +10,15 @@ typedef struct
 {
     char *key;
     char *value;
+    int sequence_num;
 } kvpair;
 
 typedef struct
 {
-    kvpair **pairs;
+    // kvpair **pairs;
+    kvpair *pairs;
     int size;
-    int mutable; 
+    int mutable_flag; 
 } memtable;
 
 typedef struct
@@ -26,12 +28,12 @@ typedef struct
     int size;
     int smallest_key;
     int largest_key;
-    int sequence_num;
+    // int sequence_num;
 } sstable;
 
 typedef struct
 {
-    sstable *tables[];
+    sstable **tables;
     int size;
     int l_0 = 0;
 } level;
@@ -61,17 +63,17 @@ void add_to_memtable(memtable *mem, const char *key, const char *value)
     pair->value = (char *)malloc(strlen(value) + 1);
     strcpy(pair->key, key);
     strcpy(pair->value, value);
-    mem->pairs[mem->size++] = pair;
+    mem->pairs[mem->size++] = *pair;
 }
 
 void print_memtable(memtable *mem)
 {
     for (int i = 0; i < mem->size; i++)
     {
-        printf("%s:%s ", mem->pairs[i]->key, mem->pairs[i]->value);
+        printf("%s:%s ", mem->pairs[i].key, mem->pairs[i].value);
     }
     printf("\n");
-}`
+}
 //fwrite to disk; 
 //compaction, fopen new file, reorganize all sst kv pairs...
 //flush only applies for L0;
@@ -85,7 +87,7 @@ void flush_memtable(lsm *tree)
     table->pairs = (kvpair *)malloc(sizeof(kvpair) * mem->size);
     for (int i = 0; i < mem->size; i++)
     {
-        kvpair *pair = mem->pairs[i];
+        kvpair *pair = &mem->pairs[i];
         table->pairs[i].key = (char *)malloc(strlen(pair->key) + 1);
         table->pairs[i].value = (char *)malloc(strlen(pair->value) + 1);
         strcpy(table->pairs[i].key, pair->key);
@@ -120,15 +122,20 @@ int compare_kvpair_void(const void *a, const void *b)
 
 int compare_kvpair_key(const void *a, const void *b)
 {
-    kvpair *ka = (kvpair *)const_cast<char *>(a);
-    kvpair *kb = (kvpair *)const_cast<char *>(b);
+    // kvpair *ka = (kvpair *)const_cast<char *>(a);
+    // kvpair *kb = (kvpair *)const_cast<char *>(b);
+    const kvpair *ka = static_cast<const kvpair *>(const_cast<void *>(a));
+    const kvpair *kb = static_cast<const kvpair *>(const_cast<void *>(b));
     return strcmp(ka->key, kb->key);
 }
 
 int binary_search(sstable *table, const char *key)
-{
-    kvpair pair = {.key = key};
-    return bsearch(&pair, table->pairs, table->size, sizeof(kvpair), compare_kvpair_void) - table->pairs;
+{   
+    char* target_key = const_cast<char*>(key);
+    kvpair pair = {.key = target_key};
+    return ((kvpair*)bsearch(&pair, table->pairs, table->size, sizeof(kvpair), compare_kvpair_void)) - table->pairs;
+    
+    // return bsearch(&pair, table->pairs, table->size, sizeof(kvpair), compare_kvpair_void);
 }
 
 const char *get_from_tree(lsm *tree, const char *key)
@@ -168,11 +175,11 @@ void print_sstable(sstable *table)
     printf("\n");
 }
 
-void print_level(level *l)
+void print_level(level *l, lsm *tree)
 {
     for (int i = 0; i < l->size; i++)
     {
-        printf("Level %d, Table %d: ", LEVELS - (l - &tree->levels[0]) - 1, i);
+        printf("Level %ld, Table %d: ", LEVELS - (l - &tree->levels[0]) - 1, i);
         print_sstable(l->tables[i]);
     }
 }
@@ -185,7 +192,7 @@ void print_tree(lsm *tree)
     {
         level *l = &tree->levels[i];
         printf("Level %d:\n", i);
-        print_level(l);
+        print_level(l, tree);
     }
 }
 
@@ -193,7 +200,7 @@ int main()
 {
     lsm tree;
     tree.mem = (memtable *)malloc(sizeof(memtable));
-    tree.mem->pairs = (kvpair **)malloc(sizeof(kvpair *) * MEMTABLE_SIZE);
+    tree.mem->pairs = (kvpair *)malloc(sizeof(kvpair *) * MEMTABLE_SIZE);
     tree.mem->size = 0;
     tree.levels = (level *)malloc(sizeof(level) * LEVELS);
     for (int i = 0; i < LEVELS; i++)
@@ -244,7 +251,7 @@ int main()
             free(table->pairs);
             free(table);
         }
-        free(l->t   ables);
+        free(l->tables);
     }
     free(tree.mem->pairs);
     free(tree.mem);
