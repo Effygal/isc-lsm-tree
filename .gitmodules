@@ -1,0 +1,3 @@
+[submodule "sLSM-Tree"]
+	path = sLSM-Tree
+	url = https://github.com/aronszanto/sLSM-Tree
