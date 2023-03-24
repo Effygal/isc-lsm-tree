@@ -1,0 +1,3 @@
+[submodule "lsm"]
+	path = lsm
+	url = git@github.com:Effygal/sLSM-Tree.git

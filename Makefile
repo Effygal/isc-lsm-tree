@@ -22,6 +22,5 @@ libclock.so: clock.cc
 libqfifo.so: qfifo.cc
 	g++ $(CXXOPTS) $^ -o $@ $(SHARED) -O3
 
-lsms.so: lsm.c lsm2.c
-	g++ $(CXXOPTS) $^ -o $@ $(SHARED) -O3
+
 
