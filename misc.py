@@ -5,6 +5,14 @@
 
 import random
 
+def p_trace(n):
+    trc = []
+    for i in range(n):
+        x, y = random.randint(0, n), random.randint(0, n)
+        trc.append("p {} {}".format(x, y))
+    return trc
+
+
 def hc(r,f,M):
     if random.random() < r:
         return random.randint(0,int(f*M)-1)
