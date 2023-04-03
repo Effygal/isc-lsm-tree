@@ -108,13 +108,13 @@ public:
         filters[_activeRun]->add(&key, sizeof(K));
     }
     
-    bool lookup(K &key, V &value){
+    bool lookup(K &key, V &value){ // need to modify to look up from cache
         bool found = false;
         for (int i = _activeRun; i >= 0; --i){
             if (key < C_0[i]->get_min() || key > C_0[i]->get_max() || !filters[i]->mayContain(&key, sizeof(K)))
                 continue;
             
-            value = C_0[i]->lookup(key, found);
+            value = C_0[i]->lookup(key, found);//mem level lookup, don't modify
             if (found) {
                 return value != V_TOMBSTONE;
             }
@@ -126,7 +126,7 @@ public:
         // it's not in C_0 so let's look at disk.
         for (int i = 0; i < _numDiskLevels; i++){
             
-            value = diskLevels[i]->lookup(key, found);
+            value = diskLevels[i]->lookup(key, found);//disk level lookup, need to modify to search from cache
             if (found) {
                 return value != V_TOMBSTONE;
             }

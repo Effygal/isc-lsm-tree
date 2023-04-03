@@ -1,27 +1,14 @@
 //
-//  diskLevel.hpp
+//  diskCache.hpp
 //  lsm-tree
 //
 //    sLSM: Skiplist-Based LSM Tree
 //    Copyright © 2017 Aron Szanto. All rights reserved.
 //
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//        You should have received a copy of the GNU General Public License
-//        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
 #pragma once
 
-#ifndef diskLevel_h
-#define diskLevel_h
+#ifndef diskCache_h
+#define diskCache_h
 #include <vector>
 #include <cstdint>
 #include <string>
@@ -38,17 +25,11 @@
 #include <cassert>
 #include <algorithm>
 
-#define LEFTCHILD(x) 2 * x + 1
-#define RIGHTCHILD(x) 2 * x + 2
-#define PARENT(x) (x - 1) / 2
-
-int TOMBSTONE = INT_MIN;
-
 using namespace std;
 
 
 template <class K, class V>
-class DiskLevel {
+class DiskCache {
     
 public: // TODO make some of these private
     typedef KVPair<K,V> KVPair_t;
@@ -57,51 +38,30 @@ public: // TODO make some of these private
     KVIntPair_t KVINTPAIRMAX;
     V V_TOMBSTONE = (V) TOMBSTONE;
 
-    struct StaticHeap {
+    struct OrderedDict{
         int size ;
         vector<KVIntPair_t> arr;
         KVIntPair_t max;
-        
+        //replace everything with LRU cache:
+        //consider ordered dict
         StaticHeap(unsigned sz, KVIntPair_t mx) {
             size = 0;
             arr = vector<KVIntPair_t>(sz, mx);
             max = mx;
         }
         
-        void push(KVIntPair_t blob) {
-            unsigned i = size++;
-            while(i && blob < arr[PARENT(i)]) {
-                arr[i] = arr[PARENT(i)] ;
-                i = PARENT(i) ;
-            }
-            arr[i] = blob ;
+        void insert(KVIntPair_t blob) {
+            
         }
         void heapify(int i) {
-            int smallest = (LEFTCHILD(i) < size && arr[LEFTCHILD(i)] < arr[i]) ? LEFTCHILD(i) : i ;
-            if(RIGHTCHILD(i) < size && arr[RIGHTCHILD(i)] < arr[smallest]) {
-                smallest = RIGHTCHILD(i);
-            }
-            if(smallest != i) {
-                KVIntPair_t temp = arr[i];
-                arr[i] = arr[smallest];
-                arr[smallest] = temp;
-                heapify(smallest) ;
-            }
+            
         }
         
         KVIntPair_t pop() {
-            KVIntPair_t ret = arr[0];
-            arr[0] = arr[--size];
-            heapify(0);
-            return ret;
+            
         }
     };
 
-    
-    
-    
-    
-    
     
     int _level;
     unsigned _pageSize; // number of elements per fence pointer
@@ -129,7 +89,7 @@ public: // TODO make some of these private
         
     }
     
-    ~DiskLevel<K,V>(){
+    ~DiskCache<K,V>(){
         for (int i = 0; i< runs.size(); ++i){
             delete runs[i];
         }
@@ -137,7 +97,7 @@ public: // TODO make some of these private
     
     void addRuns(vector<DiskRun<K, V> *> &runList, const unsigned long runLen, bool lastLevel) {
         
-
+        //TODO: change with LRU DS
         StaticHeap h = StaticHeap((int) runList.size(), KVINTPAIRMAX);
         vector<int> heads(runList.size(), 0);
         for (int i = 0; i < runList.size(); i++){
@@ -186,62 +146,16 @@ public: // TODO make some of these private
         
     }
     
-    void addRunByArray(KVPair_t * runToAdd, const unsigned long runLen){
-        assert(_activeRun < _numRuns);
-        assert(runLen == _runSize);
-        runs[_activeRun]->writeData(runToAdd, 0, runLen);
-        runs[_activeRun]->constructIndex();
-        _activeRun++;
-    }
     
-    
-    vector<DiskRun<K,V> *> getRunsToMerge(){
-        vector<DiskRun<K, V> *> toMerge;
-        for (int i = 0; i < _mergeSize; i++){
-            toMerge.push_back(runs[i]);
-        }
-
-        return toMerge;
-        
-    }
-    
-    void freeMergedRuns(vector<DiskRun<K,V> *> &toFree){
-        assert(toFree.size() == _mergeSize);
-        for (int i = 0; i < _mergeSize; i++){
-            assert(toFree[i]->_level == _level);
-            delete toFree[i];
-        }
-        runs.erase(runs.begin(), runs.begin() + _mergeSize);
-        _activeRun -= _mergeSize;
-        for (int i = 0; i < _activeRun; i++){
-
-            runs[i]->_runID = i;
-
-            string newName = ("C_" + to_string(runs[i]->_level) + "_" + to_string(runs[i]->_runID) + ".txt");
-            
-            if (rename(runs[i]->_filename.c_str(), newName.c_str())){
-                perror(("Error renaming file " + runs[i]->_filename + " to " + newName).c_str());
-                exit(EXIT_FAILURE);
-            }
-            runs[i]->_filename = newName;
-        }
-        
-        for (int i = _activeRun; i < _numRuns; i++){
-            DiskRun<K, V> * newRun = new DiskRun<K,V>(_runSize, _pageSize, _level, i, _bf_fp);
-            runs.push_back(newRun);
-        }
-    }
-    
-    bool levelFull(){
+    bool cacheFull(){
         return (_activeRun == _numRuns);
     }
-    bool levelEmpty(){
+    bool cacheEmpty(){
         return (_activeRun == 0);
     }
     
     V lookup (const K &key, bool &found) {
-        //TODO: add search from cache here:
-        
+        //TODO: change with cache DS
         int maxRunToSearch = levelFull() ? _numRuns - 1 : _activeRun - 1;
         for (int i = maxRunToSearch; i >= 0; --i){
             if (runs[i]->maxKey == INT_MIN || key < runs[i]->minKey || key > runs[i]->maxKey || !runs[i]->bf.mayContain(&key, sizeof(K))){
