@@ -1,11 +1,11 @@
 
-//    lsm.hpp
-//    lsm-tree
+//    LSM2.hpp
+//    LSM2-tree
 //
 //    Created by Aron Szanto on 3/3/17.
 
 
-//    sLSM: Skiplist-Based LSM Tree
+//    sLSM2: Skiplist-Based LSM2 Tree
 //    Copyright © 2017 Aron Szanto. All rights reserved.
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 //
 #pragma once
 
-#ifndef LSM_H
-#define LSM_H
+#ifndef LSM2_H
+#define LSM2_H
 
 #include "run.hpp"
 #include "skipList.hpp"
@@ -40,7 +40,7 @@
 #include <thread>
 
 template <class K, class V>
-class LSM {
+class LSM2 {
 
   typedef SkipList<K,V> RunType;
 
@@ -55,10 +55,10 @@ class LSM {
   vector<BloomFilter<K> *> filters;
   vector<DiskLevel<K,V> *> diskLevels;
 
-  LSM<K,V>(const LSM<K,V> &other) = default;
-  LSM<K,V>(LSM<K,V> &&other) = default;
+  LSM2<K,V>(const LSM2<K,V> &other) = default;
+  LSM2<K,V>(LSM2<K,V> &&other) = default;
 
-  LSM<K,V>(unsigned long eltsPerRun, unsigned int numRuns, double merged_frac, double bf_fp, unsigned int pageSize, unsigned int diskRunsPerLevel): _eltsPerRun(eltsPerRun), _num_runs(numRuns), _frac_runs_merged(merged_frac), _diskRunsPerLevel(diskRunsPerLevel), _num_to_merge(ceil(_frac_runs_merged * _num_runs)), _pageSize(pageSize){
+  LSM2<K,V>(unsigned long eltsPerRun, unsigned int numRuns, double merged_frac, double bf_fp, unsigned int pageSize, unsigned int diskRunsPerLevel): _eltsPerRun(eltsPerRun), _num_runs(numRuns), _frac_runs_merged(merged_frac), _diskRunsPerLevel(diskRunsPerLevel), _num_to_merge(ceil(_frac_runs_merged * _num_runs)), _pageSize(pageSize){
     _activeRun = 0;
     _bfFalsePositiveRate = bf_fp;
     _n = 0;
@@ -80,7 +80,7 @@ class LSM {
     }
     mergeLock = new mutex();
   }
-  ~LSM<K,V>(){
+  ~LSM2<K,V>(){
     if (mergeThread.joinable()){
       mergeThread.join();
     }
@@ -108,7 +108,7 @@ class LSM {
     filters[_activeRun]->add(&key, sizeof(K));
   }
 
-  bool lookup(K &key, V &value){ // need to modify to look up from cache
+  bool lookup2(K &key, V &value){ // need to modify to look up from cache
     bool found = false;
     for (int i = _activeRun; i >= 0; --i){
       if (key < C_0[i]->get_min() || key > C_0[i]->get_max() || !filters[i]->mayContain(&key, sizeof(K)))
@@ -134,48 +134,48 @@ class LSM {
     // 3:
     //     0   1   2  ...
     //  This 2D vector holds all the runs that might contain the key from index 0(top level) to _numDiskLevels(bottom level)
-    // std::vector< vector<DiskRun<K, V>*> > allPossible;
-    // for (int i = 0; i < _numDiskLevels; i++) {
-    //   // start from the top level
-    //   allPossible.push_back(diskLevels[i]->filter(key));
-    // }
-    // // now should do multithread search on this 2D vector:
-    // // Create a vector of threads and a vector to store the results
-    // std::vector<std::thread> threads(_numDiskLevels);
-    // std::vector<std::vector<V>> results(_numDiskLevels); 
-    // // launch threads
-    // for (int i = 0; i < _numDiskLevels; i++) {
-    //   // each thread will execute a lambda function which searches a vector of runs
-    //   threads[i] = std::thread([&results, &allPossible, key, i]() {
-    //       for (int j = 0; j < allPossible[i].size(); j++) {
-    //         // allPossible contains all the possible runs, so we do not need to use if statement to check now
-    //         bool found = false;
-    //         V lookupResult = allPossible[i][j]->lookup(key, found);
-    //         if (found) {
-    //           results[i].push_back(lookupResult);
-    //         }
-    //       }
-    //     });
-    // }      
-    // // Wait for all the threads to finish
-    // for (int i = 0; i < _numDiskLevels; i++) {
-    //     threads[i].join();
-    // }
-    // // finalize the result
-    // for (int i = 0; i < results.size(); i++) {
-    //   // find the first one that is not (V) NULL
-    //   for (int j = 0; j < results[i].size(); j++) {
-    //     if (results[i][j] != (V) NULL) {
-    // //       value = results[i][j];
-    //       return true;
-    //     }
-    //   }
-    // }
-    // return found;
+    std::vector< vector<DiskRun<K, V>*> > allPossible;
+    for (int i = 0; i < _numDiskLevels; i++) {
+      // start from the top level
+      allPossible.push_back(diskLevels[i]->filter(key));
+    }
+    // now should do multithread search on this 2D vector:
+    // Create a vector of threads and a vector to store the results
+    std::vector<std::thread> threads(_numDiskLevels);
+    std::vector<std::vector<V>> results(_numDiskLevels); 
+    // launch threads
+    for (int i = 0; i < _numDiskLevels; i++) {
+      // each thread will execute a lambda function which searches a vector of runs
+      threads[i] = std::thread([&results, &allPossible, key, i]() {
+          for (int j = 0; j < allPossible[i].size(); j++) {
+            // allPossible contains all the possible runs, so we do not need to use if statement to check now
+            bool found = false;
+            V lookupResult = allPossible[i][j]->lookup(key, found);
+            if (found) {
+              results[i].push_back(lookupResult);
+            }
+          }
+        });
+    }      
+    // Wait for all the threads to finish
+    for (int i = 0; i < _numDiskLevels; i++) {
+        threads[i].join();
+    }
+    // finalize the result
+    for (int i = 0; i < results.size(); i++) {
+      // find the first one that is not (V) NULL
+      for (int j = 0; j < results[i].size(); j++) {
+        if (results[i][j] != (V) NULL) {
+          value = results[i][j];
+          return true;
+        }
+      }
+    }
+    return found;
     
     /* normal disk search */
 
-    
+    /*
     // it's not in C_0 so let's look at disk.
     for (int i = 0; i < _numDiskLevels; i++){
 
@@ -184,8 +184,8 @@ class LSM {
         return value != V_TOMBSTONE;
       }
     }
-    
-    return false;
+    */
+    // return false;
   }
 
   void delete_key(K &key){
@@ -356,7 +356,7 @@ class LSM {
     if (mergeThread.joinable()){
       mergeThread.join();
     }
-    mergeThread = thread (&LSM::merge_runs, this, runs_to_merge,bf_to_merge); // comment for single threaded merging
+    mergeThread = thread (&LSM2::merge_runs, this, runs_to_merge,bf_to_merge); // comment for single threaded merging
     //        merge_runs(runs_to_merge, bf_to_merge); // uncomment for single threaded merging
     C_0.erase(C_0.begin(), C_0.begin() + _num_to_merge);
     filters.erase(filters.begin(), filters.begin() + _num_to_merge);
@@ -391,5 +391,5 @@ class LSM {
 
 
 
-#endif /* lsm_h */
+#endif /* LSM2_h */
 

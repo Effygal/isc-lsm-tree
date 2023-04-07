@@ -32,6 +32,7 @@
 #include "bloom.hpp"
 #include "hashMap.hpp"
 #include "lsm.hpp"
+#include "lsm2.hpp"
 #include <chrono>
 
 #include <mutex>
@@ -841,7 +842,8 @@ int main(int argc, char *argv[]){
 //    cartesianTest();
 //    updateLookupSkewTest();
     
-    auto lsm = LSM<int, int>(800,20,1.0,0.00100,1024,20);
+    auto lsm1 = LSM<int, int>(800,20,1.0,0.00100,1024,20);
+    auto lsm2 = LSM2<int, int>(800,20,1.0,0.00100,1024,20);
     auto strings = vector<string>(3);
     // if (argc == 2){
     // cout << "LSM Tree DSL Interactive Mode" << endl;
@@ -859,7 +861,6 @@ int main(int argc, char *argv[]){
 
     for (int i = 1; i < argc; ++i){
         f.open(argv[i]);
-        
         if(!f.is_open()) {
             perror("Error open");
             exit(EXIT_FAILURE);
@@ -869,11 +870,34 @@ int main(int argc, char *argv[]){
         auto start = high_resolution_clock::now();
         while(getline(f, line)) {
             // cout << line << endl;
-            queryLine(lsm, line, strings);
+            queryLine(lsm1, line, strings);
+            
         }
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start);
-        cout << duration.count() << endl;
+
+        cout << "lsm1 " << duration.count() << endl;
+        f.close();
+        // }
+    }
+    for (int i = 1; i < argc; ++i){
+        f.open(argv[i]);
+        if(!f.is_open()) {
+            perror("Error open");
+            exit(EXIT_FAILURE);
+        }
+        cout << argv[i] << endl;
+        
+        auto start = high_resolution_clock::now();
+        while(getline(f, line)) {
+            // cout << line << endl;
+            queryLine(lsm2, line, strings);
+            
+        }
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start);
+        
+        cout << "lsm2 " <<  duration.count() << endl;
         f.close();
         // }
     }
