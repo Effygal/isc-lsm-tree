@@ -1,0 +1,15 @@
+➜ ./main.out ../traces/realistic_trace.txt
+../traces/realistic_trace.txt
+lsm1 28384311
+../traces/realistic_trace.txt
+lsm2 1326139653
+
+../traces/p_trace.txt 
+lsm1 1589927 
+../traces/g_trace.txt 
+lsm1 873009 
+../traces/p_trace.txt 
+lsm2 1630039 
+../traces/g_trace.txt 
+lsm2 31991755 
+ThreadCreation Time: 28776841 
