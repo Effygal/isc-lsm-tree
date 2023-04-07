@@ -32,6 +32,7 @@ template <class K, class V>
 class DiskCache {
     
 public: // TODO make some of these private
+    typedef DiskRun<K,V> DiskRun_t;
     typedef KVPair<K,V> KVPair_t;
     typedef pair<KVPair<K, V>, int> KVIntPair_t;
     KVPair_t KVPAIRMAX;
@@ -178,4 +179,4 @@ public: // TODO make some of these private
         return total;
     }
 };
-#endif /* diskLevel_h */
+#endif /* diskCache_h */
