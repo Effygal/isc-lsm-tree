@@ -831,6 +831,7 @@ void queryLine(LSM<int, int> &lsm, const string &line, vector<string> &strings){
     }
 
 }
+
 int main(int argc, char *argv[]){
 
 //    insertLookupTest();
