@@ -757,9 +757,108 @@ void loadFromBin(LSM<int, int> &lsm, string filename){
         read += 2;
     }
 }
+void loadFromBin(LSM2<int, int> &lsm, string filename){
+    FILE *intArrayFile;
+    long size;
+    
+    
+    intArrayFile = fopen(filename.c_str(), "rb");
+    fseek(intArrayFile, 0, SEEK_END);
+    size = ftell(intArrayFile);
+    
+    int new_array[size / sizeof(int)];
+    
+    rewind(intArrayFile);
+    size_t num;
+    num = fread(new_array, sizeof(int), size/sizeof(int) + 1, intArrayFile);
+    assert(num == size / sizeof(int));
+    
+    int *ptr = new_array;
+    int read = 0;
+    int k,v;
+    while (read + 1 < num){
+        k = *ptr;
+        v = *(ptr + 1);
+        lsm.insert_key(k, v);
+        ptr += 2;
+        read += 2;
+    }
+}
 
 
 void queryLine(LSM<int, int> &lsm, const string &line, vector<string> &strings){
+    unsigned long pos = line.find(' ');
+    unsigned long ip = 0;
+    strings.clear();
+    
+    // Decompose statement
+    while( pos != string::npos ) {
+        strings.push_back( line.substr( ip, pos - ip + 1 ) );
+        ip = pos + 1;
+        
+        pos = line.find( ' ', ip );
+    }
+    
+    // Add the last one
+    strings.push_back( line.substr( ip, (pos < line.size() ? pos : line.size()) - ip + 1 ) );
+    
+    switch ((char) strings[0].c_str()[0]){
+        case 'p':{
+            int pk = stoi(strings[1]);
+            int v = stoi(strings[2]);
+            lsm.insert_key(pk, v);
+        }
+            break;
+        case 'g': {
+            int lk = stoi(strings[1]);
+            int v;
+            bool found = lsm.lookup(lk, v);
+            if (found) {
+                ;
+            } else {
+                ;
+            }
+            // if (found) {
+            //     cout << v;
+            // } else {
+            //     cout << "not found";
+            // }
+            
+            // cout << endl;
+        }
+            break;
+        case 'r':{
+            int lk1 = stoi(strings[1]);
+            int lk2 = stoi(strings[2]);
+            auto res = lsm.range(lk1, lk2);
+            if (!res.empty()){
+                for (int i = 0; i < res.size(); ++i){
+                    cout << res[i].key << ":" << res[i].value << " ";
+                }
+            }
+            cout << endl;
+
+        }
+            break;
+        case 'd': {
+            int dk = stoi(strings[1]);
+            lsm.delete_key(dk);
+        }
+            break;
+        case 'l': {
+            string ls = strings[1];
+            loadFromBin(lsm, ls);
+        }
+            break;
+        case 's': {
+            lsm.printStats();
+        }
+            
+
+    }
+
+}
+void queryLine(LSM2<int, int> &lsm, const string &line, vector<string> &strings){
     unsigned long pos = line.find(' ');
     unsigned long ip = 0;
     strings.clear();

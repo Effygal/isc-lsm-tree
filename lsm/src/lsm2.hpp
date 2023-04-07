@@ -39,11 +39,12 @@
 #include <mutex>
 #include <thread>
 
+
 template <class K, class V>
 class LSM2 {
 
   typedef SkipList<K,V> RunType;
-
+  int totalThreadCreation = 0;
 
 
   public:
@@ -108,7 +109,7 @@ class LSM2 {
     filters[_activeRun]->add(&key, sizeof(K));
   }
 
-  bool lookup2(K &key, V &value){ // need to modify to look up from cache
+  bool lookup(K &key, V &value){ // need to modify to look up from cache
     bool found = false;
     for (int i = _activeRun; i >= 0; --i){
       if (key < C_0[i]->get_min() || key > C_0[i]->get_max() || !filters[i]->mayContain(&key, sizeof(K)))
@@ -134,6 +135,7 @@ class LSM2 {
     // 3:
     //     0   1   2  ...
     //  This 2D vector holds all the runs that might contain the key from index 0(top level) to _numDiskLevels(bottom level)
+    auto start = high_resolution_clock::now();
     std::vector< vector<DiskRun<K, V>*> > allPossible;
     for (int i = 0; i < _numDiskLevels; i++) {
       // start from the top level
@@ -143,6 +145,9 @@ class LSM2 {
     // Create a vector of threads and a vector to store the results
     std::vector<std::thread> threads(_numDiskLevels);
     std::vector<std::vector<V>> results(_numDiskLevels); 
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    total += duration;
     // launch threads
     for (int i = 0; i < _numDiskLevels; i++) {
       // each thread will execute a lambda function which searches a vector of runs
