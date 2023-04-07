@@ -804,13 +804,13 @@ void queryLine(LSM<int, int> &lsm, const string &line, vector<string> &strings){
     
     switch ((char) strings[0].c_str()[0]){
         case 'p':{
-            int pk = stoi(strings[1]);
-            int v = stoi(strings[2]);
+            int pk = stoul(strings[1], nullptr, 16) & 0x7fffffff;
+            int v = stoul(strings[2], nullptr, 16);
             lsm.insert_key(pk, v);
         }
             break;
         case 'g': {
-            int lk = stoi(strings[1]);
+            int lk = stoul(strings[1], nullptr, 16);
             int v;
             bool found = lsm.lookup(lk, v);
             if (found) {
@@ -876,13 +876,13 @@ void queryLine(LSM2<int, int> &lsm, const string &line, vector<string> &strings)
     
     switch ((char) strings[0].c_str()[0]){
         case 'p':{
-            int pk = stoi(strings[1]);
-            int v = stoi(strings[2]);
+            int pk = stoul(strings[1], nullptr, 16) & 0x7fffffff;
+            int v = stoul(strings[2], nullptr, 16);
             lsm.insert_key(pk, v);
         }
             break;
         case 'g': {
-            int lk = stoi(strings[1]);
+            int lk = stoul(strings[1], nullptr, 16);
             int v;
             bool found = lsm.lookup(lk, v);
             if (found) {
