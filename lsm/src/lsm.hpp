@@ -165,14 +165,17 @@ class LSM {
     for (int i = 0; i < results.size(); i++) {
       // find the first one that is not (V) NULL
       for (int j = 0; j < results[i].size(); j++) {
-        if (results[i][j] != (V) NULL) 
+        if (results[i][j] != (V) NULL) {
           value = results[i][j];
+          return true;
+        }
       }
     }
+    return found;
     
     /* normal disk search */
 
-
+    /*
     // it's not in C_0 so let's look at disk.
     for (int i = 0; i < _numDiskLevels; i++){
 
@@ -181,7 +184,8 @@ class LSM {
         return value != V_TOMBSTONE;
       }
     }
-    return false;
+    */
+    // return false;
   }
 
   void delete_key(K &key){
