@@ -5,13 +5,19 @@
 
 import random
 
-def p_trace(n):
+def hyper_exponential_p_trace(n):
     trc = []
     for i in range(n):
-        x, y = random.randint(0, n), random.randint(0, n)
+        x, y = t_hc(0.8,0.2,10000), random.randint(0, n)
         trc.append("p {} {}".format(x, y))
     return trc
 
+def hyper_exponential_trace(n):
+    trc = []
+    for i in range(n):
+        x, y = hc(0.8,0.2,100000), random.randint(0, n)
+        trc.append("p {} {}".format(x, y))
+    return trc 
 
 def hc(r,f,M):
     if random.random() < r:
