@@ -32,3 +32,7 @@
 *.xcodeproj*
 disk_files/
 cs265-sysproj/
+
+#gigantic traces
+**/traces/IBMObjectStoreTrace000Part0
+**/traces/realistic_trace.txt
