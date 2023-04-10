@@ -12,35 +12,50 @@ lsm2:0.125127
 
 
 -----Uniform Distribution Random Accesses------
-../traces/p_trace.txt 
-lsm1 1589927 
-../traces/g_trace.txt 
-lsm1 873009 
-../traces/p_trace.txt 
-lsm2 1630039 
-../traces/g_trace.txt 
-lsm2 31991755 
-ThreadCreation Time: 28776841 
+❯ ./main.out ../traces/p_trace.txt ../traces/g_trace.txt ../traces/g_trace2.txt
+../traces/p_trace.txt
+lsm1 554174
+../traces/g_trace.txt
+lsm1 730752
+../traces/g_trace2.txt
+lsm1 740442
+../traces/p_trace.txt
+lsm2 639626
+../traces/g_trace.txt
+lsm2 24097341
+../traces/g_trace2.txt
+lsm2 23554450
 
 Uniform synthetic throughput:
-lsm1 put:0.62
-lsm1 get:1.145
-lsm2 put:0.61
-lsm2 get:0.031
+lsm1 put: 1.80
+lsm1 sequential get: 1.37
+lsm1 shuffled get: 1.35 
+lsm2 put: 1.56
+lsm1 sequential get: 0.041
+lsm1 shuffled get: 0.042 
+
 
 ---Hyperexponential Distribution Random Accesses----
-./main.out ../traces/p_hyper_exponential_trace.txt ../traces/g_hyper_exponential_trace.txt
+./main.out ../traces/p_hyper_exponential_trace.txt ../traces/g_hyper_exponential_trace.txt 
+../traces/g_hyper_exponential_trace2.txt
 ../traces/p_hyper_exponential_trace.txt
-lsm1 635984
+lsm1 540633
 ../traces/g_hyper_exponential_trace.txt
-lsm1 660035
+lsm1 550232
+../traces/g_hyper_exponential_trace2.txt
+lsm1 555047
 ../traces/p_hyper_exponential_trace.txt
-lsm2 850550
+lsm2 781438
 ../traces/g_hyper_exponential_trace.txt
-lsm2 23727065
+lsm2 21215273
+../traces/g_hyper_exponential_trace2.txt
+lsm2 20916525
 
 Hyperexponential synthetic throughput: 
-lsm1 put:1.57
-lsm1 get: 1.52
-lsm2 put:1.18
-lsm2 get:0.04
+lsm1 put: 1.85
+lsm1 sequential get: 1.82
+lsm1 shuffled get: 1.80 
+lsm2 put: 1.28
+lsm1 sequential get: 0.047
+lsm1 shuffled get: 0.048 
+
